@@ -22,14 +22,19 @@ int TradingSignal (void)
       Print("CopyRates of ",Symbol()," failed, no history");
       return 0;
      }
+     
    if(rt[1].tick_volume>1)
-      return 0;
-
-
+      return 0;   
+   printf("Start time"+rt[0].time); 
+   
    double   ao[3];
-   if(CopyBuffer(ExtHandle,0,0,3,ao)!=1)
-     {
-      Print("CopyBuffer from iAO failed, no data");
+   if(CopyBuffer(ExtHandle,0,0,3,ao)!=3)
+     {    
+     PrintFormat("Failed to get iAO: symbol %s/%s, error code %d",
+                  Symbol(),
+                  EnumToString(Period()),
+                  GetLastError());
+      
       return 0;
      }
      else
@@ -60,7 +65,7 @@ int TradingSignal (void)
 int OnInit(void)
   {
 //---
-   ExtHandle=iAO(Symbol(),PERIOD_CURRENT);
+   ExtHandle=iAO(Symbol(),Period());
    
    
    if(ExtHandle==INVALID_HANDLE)
