@@ -4,9 +4,10 @@
 
 #include <Trade\Trade.mqh>
 
-input int StopLoss=100;
-input int TakeProfit=100;
+input int StopLoss=670;
+input int TakeProfit=610;
 //---
+int count=0;
 int   ExtHandle=0;
 CSymbolInfo mySymbol;
 CTrade myTrade;
@@ -27,12 +28,13 @@ int TradingSignal (void)
       return 0;
 
 
-   double   ao[3];
-   if(CopyBuffer(ExtHandle,0,0,3,ao)!=3)
+   double   ao[4];
+   if(CopyBuffer(ExtHandle,0,0,4,ao)!=4)
      {
       Print("CopyBuffer from iAO failed, no data");
       return 0;
-     }
+     }  
+   printf("Tick time:"+rt[1].time+" "+DoubleToString(ao[0])+" "+DoubleToString(ao[1])+" "+DoubleToString(ao[2]));
 
     if((ao[0]>0&&ao[1]>0&&ao[2]>0)&&(ao[1]<ao[0]&&ao[1]<ao[2]))
       return 1;
@@ -63,11 +65,7 @@ int TradingSignal (void)
                  {
                   printf("An opened position has been successfully closed!!");
                  }
-               else
-                 {
-                  Alert("The position close request could not be completed - error: ",
-                       myTrade.ResultRetcodeDescription());
-                 }
+              
               }
        }
   }
@@ -82,6 +80,8 @@ int OnInit(void)
       myTrade.SetExpertMagicNumber(Magic_No);
       ulong Deviation=20;
       myTrade.SetDeviationInPoints(Deviation);
+      
+      mySymbol.Name(Symbol());
          
    
 //---
@@ -102,6 +102,8 @@ int OnInit(void)
 void OnTick(void)
   {
 //---
+
+      
       int signal=TradingSignal();
       
       if(signal==1)
@@ -110,7 +112,8 @@ void OnTick(void)
          ClosePosition(POSITION_TYPE_BUY);
          
 
-         mySymbol.Refresh();
+         mySymbol.RefreshRates();
+         printf(mySymbol.Ask());
          // define the input parameters and use the CSymbolInfo class
          // object to get the current ASK/BID price
          double Lots = 0.1;
@@ -121,15 +124,17 @@ void OnTick(void)
          // latest ask price using CSymbolInfo class object
          double Oprice = mySymbol.Ask();
          
+         //printf("Buy order place:Oprice-"+DoubleToString(Oprice)+" SL-"+DoubleToString(SL)+" TP-"+DoubleToString(TP));
          // open a buy trade
-         myTrade.PositionOpen(Symbol(),ORDER_TYPE_BUY,Lots,
-                     Oprice,SL,TP);
+        // myTrade.PositionOpen(Symbol(),ORDER_TYPE_BUY,Lots,Oprice,SL,TP);
+                     
+         myTrade.Buy(Lots,Symbol(),Oprice,SL,TP);
       }
       
        if(signal==-1)
       {
          ClosePosition(POSITION_TYPE_SELL);
-         mySymbol.Refresh();
+         mySymbol.RefreshRates();
          // define the input parameters and use the CSymbolInfo class
          // object to get the current ASK/BID price
          double Lots = 0.1;
@@ -139,9 +144,11 @@ void OnTick(void)
          double TP = mySymbol.Bid() -TakeProfit*mySymbol.Point(); 
          // latest ask price using CSymbolInfo class object
          double Oprice = mySymbol.Bid();
+         
+         printf("Sell order place:Oprice-"+DoubleToString(Oprice)+" SL-"+DoubleToString(SL)+" TP-"+DoubleToString(TP));
          // open a buy trade
-         myTrade.PositionOpen(Symbol(),ORDER_TYPE_SELL,Lots,
-                     Oprice,SL,TP);
+         //myTrade.PositionOpen(Symbol(),ORDER_TYPE_SELL,Lots,Oprice,SL,TP);
+         myTrade.Sell(Lots,Symbol(),Oprice,SL,TP);
       }
       
 //---
