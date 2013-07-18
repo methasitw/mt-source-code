@@ -7,7 +7,7 @@
 // wizard description start
 //+------------------------------------------------------------------+
 //| Description of the class                                         |
-//| Title=Signals of indicator 'Accelerator Oscillator'              |
+//| Title=Signals of indicator 'Accelerator Oscillator' 2             |
 //| Type=SignalAdvanced                                              |
 //| Name=Accelerator Oscillator                                      |
 //| ShortName=AC                                                     |
