@@ -74,6 +74,7 @@ protected:
    double            DiffHighMA(int ind)                 { return(High(ind)-MA(ind));  }
    double            DiffLowMA(int ind)                  { return(Low(ind)-MA(ind));   }
    double            DiffCloseMA(int ind)                { return(Close(ind)-MA(ind)); }
+   double            DiffCloseOpen(int ind)              { return(Close(ind)-Open(ind)); }
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -217,7 +218,7 @@ int CSignalMA::LongCondition(void)
    else
      {
       //--- the close price is above the indicator (the indicator has no objections to buying)
-      if(IS_PATTERN_USAGE(0))
+      if(IS_PATTERN_USAGE(0)&&DiffCloseOpen(idx)>0)
          result=m_pattern_0;
       //--- if the indicator is directed upwards
       if(DiffMA(idx)>0.0)
@@ -231,7 +232,7 @@ int CSignalMA::LongCondition(void)
                result=m_pattern_2;
                //--- suggest to enter the market at the "roll back"
                m_base_price=m_symbol.NormalizePrice(MA(idx));
-               printf("Long Pattern 2");
+               printf("Long Pattern ");
        
               }
            }
@@ -277,7 +278,7 @@ int CSignalMA::ShortCondition(void)
    else
      {
       //--- the close price is below the indicator (the indicator has no objections to buying)
-      if(IS_PATTERN_USAGE(0))
+      if(IS_PATTERN_USAGE(0)&&DiffCloseOpen(idx)<0)
          result=m_pattern_0;
       //--- the indicator is directed downwards
       if(DiffMA(idx)<0.0)
