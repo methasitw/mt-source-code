@@ -4,7 +4,6 @@
 //|                                              http://www.mql5.com |
 //+------------------------------------------------------------------+
 #include <Expert\ExpertSignal.mqh>
-#include <Trade\Trade.mqh>
 // wizard description start
 //+------------------------------------------------------------------+
 //| Description of the class                                         |
@@ -33,7 +32,6 @@ protected:
    //--- adjusted parameters
    int               m_ma_period;      // the "period of averaging" parameter of the indicator
    int               m_ma_shift;       // the "time shift" parameter of the indicator
-   int               m_force_stoploss;
    ENUM_MA_METHOD    m_ma_method;      // the "method of averaging" parameter of the indicator
    ENUM_APPLIED_PRICE m_ma_applied;    // the "object of averaging" parameter of the indicator
    //--- "weights" of market models (0-100)
@@ -48,7 +46,6 @@ public:
    //--- methods of setting adjustable parameters
    void              PeriodMA(int value)                 { m_ma_period=value;          }
    void              Shift(int value)                    { m_ma_shift=value;           }
-   void              Force_StopLoss(int value)           { m_force_stoploss=value;     }
    void              Method(ENUM_MA_METHOD value)        { m_ma_method=value;          }
    void              Applied(ENUM_APPLIED_PRICE value)   { m_ma_applied=value;         }
    //--- methods of adjusting "weights" of market models
@@ -74,7 +71,6 @@ protected:
    double            DiffHighMA(int ind)                 { return(High(ind)-MA(ind));  }
    double            DiffLowMA(int ind)                  { return(Low(ind)-MA(ind));   }
    double            DiffCloseMA(int ind)                { return(Close(ind)-MA(ind)); }
-   double            DiffCloseOpen(int ind)              { return(Close(ind)-Open(ind)); }
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -154,51 +150,11 @@ bool CSignalMA::InitMA(CIndicators *indicators)
 //--- ok
    return(true);
   }
-  
-  //If current position doesn't have stop loss, close position if it loses too much already.
-  
-  void ClosePosition(int stoploss)
-  {
-    CPositionInfo position;
-    CTrade trade;
-    CSymbolInfo symbol;
-    symbol.Name(Symbol());
-    
-    position.Select(symbol.Name());
-    //if there is no stop loss, check current lose
-    if(position.StopLoss()==0)
-    {
-    
-      double points=symbol.Point();
-      if(position.PositionType()==POSITION_TYPE_BUY)
-      {
-         if(position.PriceCurrent()<position.PriceOpen()-points*stoploss)
-         {
-           trade.PositionClose(symbol.Name());
-         }
-      }
-      
-         if(position.PositionType()==POSITION_TYPE_SELL)
-      {
-      
-          
-         if(position.PriceCurrent()>position.PriceOpen()+points*stoploss)
-         {
-         
-           trade.PositionClose(symbol.Name());
-         }
-      }
-
-      
-    }
-  
-  }
 //+------------------------------------------------------------------+
 //| "Voting" that price will grow.                                   |
 //+------------------------------------------------------------------+
 int CSignalMA::LongCondition(void)
   {
-   ClosePosition(m_force_stoploss);   
    int result=0;
    int idx   =StartIndex();
 //--- analyze positional relationship of the close price and the indicator at the first analyzed bar
@@ -211,14 +167,12 @@ int CSignalMA::LongCondition(void)
          result=m_pattern_1;
          //--- consider that this is an unformed "piercing" and suggest to enter the market at the current price
          m_base_price=0.0;
-         printf("Long Pattern 1");
-         
         }
      }
    else
      {
       //--- the close price is above the indicator (the indicator has no objections to buying)
-      if(IS_PATTERN_USAGE(0)&&DiffCloseOpen(idx)>0)
+      if(IS_PATTERN_USAGE(0))
          result=m_pattern_0;
       //--- if the indicator is directed upwards
       if(DiffMA(idx)>0.0)
@@ -232,8 +186,6 @@ int CSignalMA::LongCondition(void)
                result=m_pattern_2;
                //--- suggest to enter the market at the "roll back"
                m_base_price=m_symbol.NormalizePrice(MA(idx));
-               printf("Long Pattern ");
-       
               }
            }
          else
@@ -245,8 +197,6 @@ int CSignalMA::LongCondition(void)
                result=m_pattern_3;
                //--- consider that this is a formed "piercing" and suggest to enter the market at the current price
                m_base_price=0.0;
-               printf("Long Pattern 3");
-       
               }
            }
         }
@@ -271,14 +221,12 @@ int CSignalMA::ShortCondition(void)
          result=m_pattern_1;
          //--- consider that this is an unformed "piercing" and suggest to enter the market at the current price
          m_base_price=0.0;
-         printf("Short Pattern 1");
-//     
         }
      }
    else
      {
       //--- the close price is below the indicator (the indicator has no objections to buying)
-      if(IS_PATTERN_USAGE(0)&&DiffCloseOpen(idx)<0)
+      if(IS_PATTERN_USAGE(0))
          result=m_pattern_0;
       //--- the indicator is directed downwards
       if(DiffMA(idx)<0.0)
@@ -292,7 +240,6 @@ int CSignalMA::ShortCondition(void)
                result=m_pattern_2;
                //--- suggest to enter the market at the "roll back"
                m_base_price=m_symbol.NormalizePrice(MA(idx));
-               printf("Short Pattern 2");
               }
            }
          else
@@ -304,8 +251,6 @@ int CSignalMA::ShortCondition(void)
                result=m_pattern_3;
                //--- consider that this is a formed "piercing" and suggest to enter the market at the current price
                m_base_price=0.0;
-               printf("Short Pattern 3");
-
               }
            }
         }
