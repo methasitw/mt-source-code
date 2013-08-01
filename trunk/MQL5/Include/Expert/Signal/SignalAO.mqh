@@ -25,11 +25,14 @@ class CSignalAO : public CExpertSignal
   {
 protected:
    CiAO              m_ao;             // object-indicator
+   CiADX             m_adx;
    //--- "weights" of market models (0-100)
    int               m_pattern_0;      // model 0 "first analyzed bar has required color"
    int               m_pattern_1;      // model 1 "the 'saucer' signal"
    int               m_pattern_2;      // model 2 "the 'crossing of the zero line' signal"
    int               m_pattern_3;      // model 2 "the 'divergence' signal"
+   int               m_adx_period;
+   int               m_adx_threshold;
    //--- variables
    double            m_extr_osc[10];   // array of values of extremums of the oscillator
    double            m_extr_pr[10];    // array of values of the corresponding extremums of price
@@ -39,6 +42,8 @@ protected:
 public:
                      CSignalAO(void);
                     ~CSignalAO(void);
+   void              ADX_MA_Period(int value)       {m_adx_period=value;         }
+   void              ADXThreshold(int value)     {m_adx_threshold=value;      }
    //--- methods of adjusting "weights" of market models
    void              Pattern_0(int value)        { m_pattern_0=value;         }
    void              Pattern_1(int value)        { m_pattern_1=value;         }
@@ -58,12 +63,13 @@ protected:
    double            DiffAO(int ind)             { return(AO(ind)-AO(ind+1)); }
    int               StateAO(int ind);
    bool              ExtStateAO(int ind);
+   double            ADX_Main(int ind)           {return m_adx.Main(ind);}
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
 //+------------------------------------------------------------------+
 CSignalAO::CSignalAO(void) : m_pattern_0(30),
-                             m_pattern_1(20),
+                             m_pattern_1(70),
                              m_pattern_2(70),
                              m_pattern_3(90)
   {
@@ -107,8 +113,22 @@ bool CSignalAO::InitAO(CIndicators *indicators)
       printf(__FUNCTION__+": error adding object");
       return(false);
      }
+     
+    if(!indicators.Add(GetPointer(m_adx)))
+     {
+      printf(__FUNCTION__+": error adding object");
+      return(false);
+     }
 //--- initialize object
    if(!m_ao.Create(m_symbol.Name(),m_period))
+     {
+      printf(__FUNCTION__+": error initializing object");
+      return(false);
+     }
+     
+   //--- initialize object
+   if(!m_adx.Create(m_symbol.Name(),m_period,m_adx_period))
+   
      {
       printf(__FUNCTION__+": error initializing object");
       return(false);
@@ -248,13 +268,13 @@ int CSignalAO::LongCondition(void)
    if(AO(idx++)>0.0)
      {
       //--- first analyzed bar is greater than zero, search for the "saucer" and "crosing of the zero line" signals
-      if(IS_PATTERN_USAGE(1) && DiffAO(idx)<0.0)
+      if(IS_PATTERN_USAGE(1) && DiffAO(idx)<0.0&&ADX_Main(idx)>m_adx_threshold)
         {
          //--- the "saucer" signal
          //--- there is a condition for buying
          return(m_pattern_1);
         }
-      if(IS_PATTERN_USAGE(2) && AO(idx)<0.0)
+      if(IS_PATTERN_USAGE(2) && AO(idx)<0.0&&ADX_Main(idx)>m_adx_threshold)
         {
          //--- the "crossing of the zero line" signal
          //--- there is a condition for buying
@@ -276,6 +296,7 @@ int CSignalAO::LongCondition(void)
               {
                //--- both valleys are below zero, the peak is between them and it hasn't raised above zero
                //--- we suppose that this is "divergence"
+               if(ADX_Main(idx)>m_adx_threshold)
                return(m_pattern_3);
               }
            }
@@ -300,13 +321,13 @@ int CSignalAO::ShortCondition(void)
    if(AO(idx++)<0.0)
      {
       //--- first analyzed bar is below zero, search for the "saucer" and "crossing of the zero line" signals
-      if(IS_PATTERN_USAGE(1) && DiffAO(idx)>0.0)
+      if(IS_PATTERN_USAGE(1) && DiffAO(idx)>0.0&&ADX_Main(idx)>m_adx_threshold)
         {
          //--- the "saucer" signal
          //--- there is a condition for buying
          return(m_pattern_1);
         }
-      if(IS_PATTERN_USAGE(2) && AO(idx)>0.0)
+      if(IS_PATTERN_USAGE(2) && AO(idx)>0.0&&ADX_Main(idx)>m_adx_threshold)
         {
          //--- the "crossing of the zero line" signal
          //--- there is a condition for buying
@@ -328,6 +349,7 @@ int CSignalAO::ShortCondition(void)
               {
                //--- both peaks are above zero and the valley between them hasn't fallen below zero
                //--- we suppose that this is "divergence"
+               if(ADX_Main(idx)>m_adx_threshold)
                return(m_pattern_3);
               }
            }
