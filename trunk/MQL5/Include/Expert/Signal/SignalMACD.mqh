@@ -4,6 +4,7 @@
 //|                                              http://www.mql5.com |
 //+------------------------------------------------------------------+
 #include <Expert\ExpertSignal.mqh>
+#include <Trade\Trade.mqh>
 // wizard description start
 //+------------------------------------------------------------------+
 //| Description of the class                                         |
@@ -29,6 +30,11 @@ class CSignalMACD : public CExpertSignal
   {
 protected:
    CiMACD            m_MACD;           // object-oscillator
+   CiADX             m_adx;
+   CiRSI             m_rsi;
+     int               m_rsi_top;
+   int               m_rsi_bottom;
+   int               m_rsi_period;
    //--- adjusted parameters
    int               m_period_fast;    // the "period of fast EMA" parameter of the oscillator
    int               m_period_slow;    // the "period of slow EMA" parameter of the oscillator
@@ -46,10 +52,17 @@ protected:
    double            m_extr_pr[10];    // array of values of the corresponding extremums of price
    int               m_extr_pos[10];   // array of shifts of extremums (in bars)
    uint              m_extr_map;       // resulting bit-map of ratio of extremums of the oscillator and the price
-
+   int               m_adx_period;
+   int               m_adx_threshold;
 public:
+void              ClosePosition();
                      CSignalMACD(void);
                     ~CSignalMACD(void);
+   void              ADX_MA_Period(int value)       {m_adx_period=value;         }
+   void              ADXThreshold(int value)     {m_adx_threshold=value;      }
+      void              RSI_Top(int value)     {m_rsi_top=value;      }
+   void              RSI_Bottom(int value)     {m_rsi_bottom=value;      }
+   void              RSI_Period(int value)     {m_rsi_period=value;      }
    //--- methods of setting adjustable parameters
    void              PeriodFast(int value)             { m_period_fast=value;           }
    void              PeriodSlow(int value)             { m_period_slow=value;           }
@@ -81,6 +94,7 @@ protected:
    double            State(int ind) { return(Main(ind)-Signal(ind)); }
    bool              ExtState(int ind);
    bool              CompareMaps(int map,int count,bool minimax=false,int start=0);
+   double            ADX_Main(int ind)           {return m_adx.Main(ind);}
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -90,11 +104,11 @@ CSignalMACD::CSignalMACD(void) : m_period_fast(12),
                                  m_period_signal(9),
                                  m_applied(PRICE_CLOSE),
                                  m_pattern_0(10),
-                                 m_pattern_1(30),
+                                 m_pattern_1(0),
                                  m_pattern_2(80),
-                                 m_pattern_3(50),
-                                 m_pattern_4(60),
-                                 m_pattern_5(100)
+                                 m_pattern_3(80),
+                                 m_pattern_4(0),
+                                 m_pattern_5(0)
   {
 //--- initialization of protected data
    m_used_series=USE_SERIES_HIGH+USE_SERIES_LOW;
@@ -149,12 +163,36 @@ bool CSignalMACD::InitMACD(CIndicators *indicators)
       printf(__FUNCTION__+": error adding object");
       return(false);
      }
+    if(!indicators.Add(GetPointer(m_adx)))
+     {
+      printf(__FUNCTION__+": error adding object");
+      return(false);
+     }
+     
+    if(!indicators.Add(GetPointer(m_rsi)))
+     {
+      printf(__FUNCTION__+": error adding object");
+      return(false);
+     }
 //--- initialize object
    if(!m_MACD.Create(m_symbol.Name(),m_period,m_period_fast,m_period_slow,m_period_signal,m_applied))
      {
       printf(__FUNCTION__+": error initializing object");
       return(false);
      }
+      //--- initialize object
+   if(!m_adx.Create(m_symbol.Name(),m_period,m_adx_period))
+   
+     {
+      printf(__FUNCTION__+": error initializing object");
+      return(false);
+     }
+     if(!m_rsi.Create(m_symbol.Name(),m_period,m_rsi_period,PRICE_CLOSE))
+     {
+      printf(__FUNCTION__+": error initializing object");
+      return(false);
+     }
+     
 //--- ok
    return(true);
   }
@@ -329,11 +367,42 @@ bool CSignalMACD::CompareMaps(int map,int count,bool minimax,int start)
 //--- ok
    return(true);
   }
+   void CSignalMACD::ClosePosition()
+  {
+    CPositionInfo position;
+    CTrade trade;
+    CSymbolInfo symbol;
+    symbol.Name(Symbol());
+    
+    if(position.Select(symbol.Name()))
+    {
+     int idx   =StartIndex();
+     if(m_rsi.Main(idx)>m_rsi_bottom&&m_rsi.Main(idx+1)<m_rsi_bottom)
+     {
+         if(position.PositionType()==POSITION_TYPE_SELL)
+         {
+           trade.PositionClose(symbol.Name());
+         }
+     }
+     
+     if(m_rsi.Main(idx)<m_rsi_top&&m_rsi.Main(idx+1)>m_rsi_top)
+     {
+         if(position.PositionType()==POSITION_TYPE_BUY)
+         {
+           trade.PositionClose(symbol.Name());
+         }
+     }    
+    }
+  }
+  
+  
+  
 //+------------------------------------------------------------------+
 //| "Voting" that price will grow.                                   |
 //+------------------------------------------------------------------+
 int CSignalMACD::LongCondition(void)
   {
+   //ClosePosition();
    int result=0;
    int idx   =StartIndex();
 //--- check direction of the main line
@@ -346,11 +415,14 @@ int CSignalMACD::LongCondition(void)
       if(IS_PATTERN_USAGE(1) && DiffMain(idx+1)<0.0)
          result=m_pattern_1;      // signal number 1
       //--- if the model 2 is used, look for an intersection of the main and signal line
-      if(IS_PATTERN_USAGE(2) && State(idx)>0.0 && State(idx+1)<0.0)
+      if(IS_PATTERN_USAGE(2) && State(idx)>0.0 && State(idx+1)<0.0&&ADX_Main(idx)>m_adx_threshold)
          result=m_pattern_2;      // signal number 2
       //--- if the model 3 is used, look for an intersection of the main line and the zero level
-      if(IS_PATTERN_USAGE(3) && Main(idx)>0.0 && Main(idx+1)<0.0)
+      if(IS_PATTERN_USAGE(3) && Main(idx)>0.0 && Main(idx+1)<0.0&&ADX_Main(idx)>m_adx_threshold)
+      {
+         printf("Current adx:"+DoubleToString(ADX_Main(idx)));
          result=m_pattern_3;      // signal number 3
+      }
       //--- if the models 4 or 5 are used and the main line turned upwards below the zero level, look for divergences
       if((IS_PATTERN_USAGE(4) || IS_PATTERN_USAGE(5)) && Main(idx)<0.0)
         {
@@ -384,13 +456,13 @@ int CSignalMACD::ShortCondition(void)
       if(IS_PATTERN_USAGE(1) && DiffMain(idx+1)>0.0)
          result=m_pattern_1;      // signal number 1
       //--- if the model 2 is used, look for an intersection of the main and signal line
-      if(IS_PATTERN_USAGE(2) && State(idx)<0.0 && State(idx+1)>0.0)
+      if(IS_PATTERN_USAGE(2) && State(idx)<0.0 && State(idx+1)>0.0&&ADX_Main(idx)>m_adx_threshold)
          result=m_pattern_2;      // signal number 2
       //--- if the model 3 is used, look for an intersection of the main line and the zero level
-      if(IS_PATTERN_USAGE(3) && Main(idx)<0.0 && Main(idx+1)>0.0)
+      if(IS_PATTERN_USAGE(3) && Main(idx)<0.0 && Main(idx+1)>0.0&&ADX_Main(idx)>m_adx_threshold)
          result=m_pattern_3;      // signal number 3
       //--- if the models 4 or 5 are used and the main line turned downwards above the zero level, look for divergences
-      if((IS_PATTERN_USAGE(4) || IS_PATTERN_USAGE(5)) && Main(idx)>0.0)
+      if((IS_PATTERN_USAGE(4) || IS_PATTERN_USAGE(5)) && Main(idx)>m_adx_threshold)
         {
          //--- perform the extended analysis of the oscillator state
          ExtState(idx);

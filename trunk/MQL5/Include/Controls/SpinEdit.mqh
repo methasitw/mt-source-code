@@ -258,7 +258,7 @@ bool CSpinEdit::OnChangeValue(void)
 //--- copy text to the edit field edit
    m_edit.Text(IntegerToString(m_value));
 //--- send notification
-   EventChartCustom(m_chart_id,ON_CHANGE,m_id,0.0,m_name);
+   EventChartCustom(INTERNAL_EVENT,ON_CHANGE,m_id,0.0,m_name);
 //--- handled
    return(true);
   }

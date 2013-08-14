@@ -166,7 +166,7 @@ bool CCheckBox::Load(const int file_handle)
 bool CCheckBox::OnClickButton(void)
   {
 //--- send the "changed state" event
-   EventChartCustom(m_chart_id,ON_CHANGE,m_id,0.0,m_name);
+   EventChartCustom(INTERNAL_EVENT,ON_CHANGE,m_id,0.0,m_name);
 //--- handled
    return(true);
   }

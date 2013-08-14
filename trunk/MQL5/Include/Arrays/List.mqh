@@ -380,7 +380,7 @@ CObject *CList::DetachCurrent(void)
       if(m_curr_node==NULL)
         {
          m_curr_node=tmp_node;
-         m_curr_idx=m_data_total-1;
+         m_curr_idx=m_data_total-2;
         }
      }
    m_data_total--;
