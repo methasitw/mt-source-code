@@ -1077,10 +1077,11 @@ bool CTrade::FillingCheck(const string symbol)
             m_request.type_filling=m_type_filling;
             return(true);
            }
+         //--- wrong filling policy, set error code
+         m_result.retcode=TRADE_RETCODE_INVALID_FILL;
+         return(false);
         }
-      //--- wrong filling policy, set error code
-      m_result.retcode=TRADE_RETCODE_INVALID_FILL;
-      return(false);
+      return(true);
      }
 //--- EXCHANGE execution mode
    switch(m_type_filling)

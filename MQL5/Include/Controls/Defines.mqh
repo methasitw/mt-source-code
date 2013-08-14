@@ -150,6 +150,7 @@ enum ENUM_WND_ALIGN_FLAGS
 //+------------------------------------------------------------------+
 //| Macro of event handling map                                      |
 //+------------------------------------------------------------------+
+#define INTERNAL_EVENT                           (-1)
 //--- beginning of map
 #define EVENT_MAP_BEGIN(class_name)              bool class_name::OnEvent(const int id,const long& lparam,const double& dparam,const string& sparam) {
 //--- end of map

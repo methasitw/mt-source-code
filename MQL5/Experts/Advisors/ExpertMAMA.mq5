@@ -12,8 +12,7 @@
 #include <Expert\Expert.mqh>
 #include <Expert\Signal\SignalMA.mqh>
 #include <Expert\Trailing\TrailingMA.mqh>
-#include <Expert\Trailing\TrailingFixedPips.mqh>
-#include <Expert\Money\MoneyFixedLot.mqh>
+#include <Expert\Money\MoneyNone.mqh>
 //+------------------------------------------------------------------+
 //| Inputs                                                           |
 //+------------------------------------------------------------------+
@@ -22,22 +21,15 @@ input string             Inp_Expert_Title       ="ExpertMAMA";
 int                      Expert_MagicNumber     =12003;
 bool                     Expert_EveryTick       =false;
 //--- inputs for signal
-input double Signal_StopLevel              =30.0;       // Stop Loss level (in points)
-input double Signal_TakeLevel              =50.0;       // Take Profit level (in points)
-input int Signal_Force_StopLevel        =6000.0;       
 input int                Inp_Signal_MA_Period   =12;
 input int                Inp_Signal_MA_Shift    =6;
 input ENUM_MA_METHOD     Inp_Signal_MA_Method   =MODE_SMA;
 input ENUM_APPLIED_PRICE Inp_Signal_MA_Applied  =PRICE_CLOSE;
-
-
-input int    Trailing_FixedPips_StopLevel  =30;         // Stop Loss trailing level (in points)
-input int    Trailing_FixedPips_ProfitLevel=50;         // Take Profit trailing level (in points)
-
-//--- inputs for money
-input double Money_FixLot_Percent          =50.0;       // Percent
-input double Money_FixLot_Lots             =0.01;        // Fixed volume
-
+//--- inputs for trailing
+input int                Inp_Trailing_MA_Period =12;
+input int                Inp_Trailing_MA_Shift  =0;
+input ENUM_MA_METHOD     Inp_Trailing_MA_Method =MODE_SMA;
+input ENUM_APPLIED_PRICE Inp_Trailing_MA_Applied=PRICE_CLOSE;
 //+------------------------------------------------------------------+
 //| Global expert object                                             |
 //+------------------------------------------------------------------+
@@ -77,10 +69,6 @@ int OnInit(void)
    signal.Shift(Inp_Signal_MA_Shift);
    signal.Method(Inp_Signal_MA_Method);
    signal.Applied(Inp_Signal_MA_Applied);
-   signal.StopLevel(Signal_StopLevel);
-   signal.TakeLevel(Signal_TakeLevel);
-   signal.Force_StopLoss(Signal_Force_StopLevel);
-   signal.EveryTick(false);
 //--- Check signal parameters
    if(!signal.ValidationSettings())
      {
@@ -89,16 +77,14 @@ int OnInit(void)
       ExtExpert.Deinit();
       return(-4);
      }
- 
-
- //--- Creation of trailing object
-   CTrailingFixedPips *trailing=new CTrailingFixedPips;
+//--- Creation of trailing object
+   CTrailingMA *trailing=new CTrailingMA;
    if(trailing==NULL)
      {
       //--- failed
       printf(__FUNCTION__+": error creating trailing");
       ExtExpert.Deinit();
-      return(INIT_FAILED);
+      return(-5);
      }
 //--- Add trailing to expert (will be deleted automatically))
    if(!ExtExpert.InitTrailing(trailing))
@@ -106,28 +92,29 @@ int OnInit(void)
       //--- failed
       printf(__FUNCTION__+": error initializing trailing");
       ExtExpert.Deinit();
-      return(INIT_FAILED);
+      return(-6);
      }
 //--- Set trailing parameters
-   trailing.StopLevel(Trailing_FixedPips_StopLevel);
-   trailing.ProfitLevel(Trailing_FixedPips_ProfitLevel);
-    if(!trailing.ValidationSettings())
+   trailing.Period(Inp_Trailing_MA_Period);
+   trailing.Shift(Inp_Trailing_MA_Shift);
+   trailing.Method(Inp_Trailing_MA_Method);
+   trailing.Applied(Inp_Trailing_MA_Applied);
+//--- Check trailing parameters
+   if(!trailing.ValidationSettings())
      {
       //--- failed
       printf(__FUNCTION__+": error trailing parameters");
       ExtExpert.Deinit();
       return(-7);
      }
-
-     
-//--- Creation of money object   
-   CMoneyFixedLot *money=new CMoneyFixedLot;
+//--- Creation of money object
+   CMoneyNone *money=new CMoneyNone;
    if(money==NULL)
      {
       //--- failed
       printf(__FUNCTION__+": error creating money");
       ExtExpert.Deinit();
-      return(INIT_FAILED);
+      return(-8);
      }
 //--- Add money to expert (will be deleted automatically))
    if(!ExtExpert.InitMoney(money))
@@ -135,18 +122,16 @@ int OnInit(void)
       //--- failed
       printf(__FUNCTION__+": error initializing money");
       ExtExpert.Deinit();
-      return(INIT_FAILED);
+      return(-9);
      }
-   //--- Set money parameters
-  // money.DecreaseFactor(Money_SizeOptimized_DecreaseFactor);
-   money.Percent(Money_FixLot_Percent);
-   money.Lots(Money_FixLot_Lots);
-   //--- Check all trading objects parameters
-   if(!ExtExpert.ValidationSettings())
+//--- Set money parameters
+//--- Check money parameters
+   if(!money.ValidationSettings())
      {
       //--- failed
+      printf(__FUNCTION__+": error money parameters");
       ExtExpert.Deinit();
-      return(INIT_FAILED);
+      return(-10);
      }
 //--- Tuning of all necessary indicators
    if(!ExtExpert.InitIndicators())

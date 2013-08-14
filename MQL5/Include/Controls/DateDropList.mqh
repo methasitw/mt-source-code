@@ -260,7 +260,7 @@ bool CDateDropList::OnClick(void)
                   m_value.Day(i);
                   Hide();
                   //--- send notification
-                  EventChartCustom(m_chart_id,ON_CHANGE,m_id,0.0,m_name);
+                  EventChartCustom(INTERNAL_EVENT,ON_CHANGE,m_id,0.0,m_name);
                   break;
                   //--- within the year
                case DATE_MODE_YEAR:

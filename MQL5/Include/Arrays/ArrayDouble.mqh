@@ -430,7 +430,7 @@ bool CArrayDouble::DeleteRange(int from,int to)
 //--- delete
    if(to>=m_data_total-1)
       to=m_data_total-1;
-   MemMove(from,to+1,m_data_total-to);
+   MemMove(from,to+1,m_data_total-to-1);
    m_data_total-=to-from+1;
 //--- successful
    return(true);

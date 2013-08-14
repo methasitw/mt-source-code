@@ -220,7 +220,7 @@ bool CDatePicker::OnChangeList(void)
 //--- set text in the main entry field
    m_edit.Text(text);
 //--- send notification
-   EventChartCustom(m_chart_id,ON_CHANGE,m_id,0.0,m_name);
+   EventChartCustom(INTERNAL_EVENT,ON_CHANGE,m_id,0.0,m_name);
 //--- handled
    return(true);
   }

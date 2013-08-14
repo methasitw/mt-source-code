@@ -165,7 +165,7 @@ bool CEdit::OnChange(void)
 bool CEdit::OnObjectEndEdit(void)
   {
 //--- send the ON_END_EDIT notification
-   EventChartCustom(m_chart_id,ON_END_EDIT,m_id,0.0,m_name);
+   EventChartCustom(INTERNAL_EVENT,ON_END_EDIT,m_id,0.0,m_name);
 //--- handled
    return(true);
   }
@@ -177,7 +177,7 @@ bool CEdit::OnClick(void)
 //--- if editing is enabled, send the ON_START_EDIT notification
    if(!m_read_only)
      {
-      EventChartCustom(m_chart_id,ON_START_EDIT,m_id,0.0,m_name);
+      EventChartCustom(INTERNAL_EVENT,ON_START_EDIT,m_id,0.0,m_name);
       //--- handled
       return(true);
      }
