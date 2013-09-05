@@ -32,9 +32,10 @@ input int    Trailing_FixedPips_StopLevel  =30;       // Stop Loss trailing leve
 input int    Trailing_FixedPips_ProfitLevel=50;       // Take Profit trailing level (in points)
 input int    Signal_ADX_MA_Period          =14;       //ADX moving average period
 input int    Signal_ADX_Threshold          =50;       //ADX threshold
-input int    Signal_RSI_Top                =70;
-input int    Signal_RSI_Bottom             =30;
-input int    Signal_RSI_Period             =3;
+input int    Signal_MA_Period             =12;
+input ENUM_MA_METHOD    Signal_MA_Method            =MODE_EMA;
+input ENUM_APPLIED_PRICE    Signal_MA_Applied            =PRICE_CLOSE;
+
 //--- inputs for money
 input double Money_FixLot_Percent          =50.0;     // Percent
 input double Money_FixLot_Lots             =0.3;      // Fixed volume
@@ -80,9 +81,9 @@ int OnInit(void)
    signal.StopLevel(Inp_Signal_MACD_StopLoss);
    signal.ADXThreshold(Signal_ADX_Threshold);
    signal.ADX_MA_Period(Signal_ADX_MA_Period);
-   signal.RSI_Top(Signal_RSI_Top);
-   signal.RSI_Bottom(Signal_RSI_Bottom);
-   signal.RSI_Period(Signal_RSI_Period);
+   signal.MA_Applied(Signal_MA_Applied);
+   signal.MA_Method(Signal_MA_Method);
+   signal.MA_Period(Signal_MA_Period);
 //--- Check signal parameters
    if(!signal.ValidationSettings())
      {
