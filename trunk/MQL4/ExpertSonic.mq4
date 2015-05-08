@@ -230,7 +230,7 @@ void OnTick()
    
   
             //candle always use bid price
-            if(Bid>iMAHigh+Buffer*point&&iOpenPrice<iMAHigh)
+            if(Bid>iMAHigh+Buffer*point&&Bid<iMAHigh+TakeProfit*point/2&&iOpenPrice<iMAHigh)
             {
                bool lowerTimeFrameCheck=(iHigherMA_0>iHigherMA_1&&iHigherMA_1>iHigherMA_2&&Bid>iLowerMAHigh);
                
@@ -244,6 +244,9 @@ void OnTick()
                    sl=slMin;
                   
                   tp=Ask+TakeProfit*point;
+                  
+                  
+                  
                   bool res;
                   res=OrderSend(Symbol(),OP_BUY,Lot,Ask,3,sl,0);
                   if(!res)
@@ -256,7 +259,7 @@ void OnTick()
                
             }
             
-            if(Bid<iMALow-Buffer*point&&iOpenPrice>iMALow)
+            if(Bid<iMALow-Buffer*point&&Bid>iMALow-TakeProfit*point/2&&iOpenPrice>iMALow)
             {
             
               bool lowerTimeFrameCheck=(iHigherMA_0<iHigherMA_1&&iHigherMA_1<iHigherMA_2&&Bid<iLowerMALow);
