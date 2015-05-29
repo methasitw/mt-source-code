@@ -13,7 +13,8 @@
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
-input double TakeProfit    =200;
+input double TakeProfit    =1000;
+input double SPAdjust    =300;
 input double Buffer=20;
 input int MaxOrders=8;
 input double Lot=0.1;
@@ -154,7 +155,7 @@ void OnTick()
          {
           
            //If we have 30bps profit and current sl is lower than entry price
-           if(Bid>openPrice+TakeProfit*point&&currentSL<openPrice)
+           if(Bid>openPrice+SPAdjust*point&&currentSL<openPrice)
            {
            
              bool res=OrderModify(OrderTicket(),OrderOpenPrice(),OrderOpenPrice(),OrderTakeProfit(),0);
@@ -190,7 +191,7 @@ void OnTick()
          else if(OrderType()==OP_SELL)
          {
              //If we have 30bps profit and current sl is lower than entry price
-           if(Ask<openPrice-TakeProfit*point&&currentSL>openPrice)
+           if(Ask<openPrice-SPAdjust*point&&currentSL>openPrice)
            {
            
              bool res=OrderModify(OrderTicket(),OrderOpenPrice(),OrderOpenPrice(),OrderTakeProfit(),0);
@@ -230,7 +231,7 @@ void OnTick()
    
   
             //candle always use bid price
-            if(Bid>iMAHigh+Buffer*point&&Bid<iMAHigh+TakeProfit*point/2&&iOpenPrice<iMAHigh)
+            if(Bid>iMAHigh+Buffer*point&&Bid<iMAHigh+SPAdjust*point/2&&iOpenPrice<iMAHigh)
             {
                bool lowerTimeFrameCheck=(iHigherMA_0>iHigherMA_1&&iHigherMA_1>iHigherMA_2&&Bid>iLowerMAHigh);
                
@@ -259,7 +260,7 @@ void OnTick()
                
             }
             
-            if(Bid<iMALow-Buffer*point&&Bid>iMALow-TakeProfit*point/2&&iOpenPrice>iMALow)
+            if(Bid<iMALow-Buffer*point&&Bid>iMALow-SPAdjust*point/2&&iOpenPrice>iMALow)
             {
             
               bool lowerTimeFrameCheck=(iHigherMA_0<iHigherMA_1&&iHigherMA_1<iHigherMA_2&&Bid<iLowerMALow);
