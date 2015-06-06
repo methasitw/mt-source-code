@@ -15,7 +15,7 @@
 //+------------------------------------------------------------------+
 input double TakeProfit    =1000;
 input double SPAdjust    =300;
-input double Buffer=20;
+input double Buffer=40;
 input int MaxOrders=8;
 input double Lot=0.1;
 
@@ -127,7 +127,7 @@ void OnTick()
    iOpenPrice=iOpen(Symbol(),Period(),0); 
               
    
-   double tp,sl;
+   double sl;
    double point=SymbolInfoDouble(Symbol(),SYMBOL_POINT);
    double minstoplevel=MarketInfo(Symbol(),MODE_STOPLEVEL);
     
@@ -244,7 +244,7 @@ void OnTick()
                   if(sl>slMin)
                    sl=slMin;
                   
-                  tp=Ask+TakeProfit*point;
+                //  tp=Ask+TakeProfit*point;
                   
                   
                   
@@ -252,7 +252,7 @@ void OnTick()
                   res=OrderSend(Symbol(),OP_BUY,Lot,Ask,3,sl,0);
                   if(!res)
                      Print("Error in OrderSend. Error code=",GetLastError());
-                  res=OrderSend(Symbol(),OP_BUY,Lot,Ask,3,sl,tp);
+                  res=OrderSend(Symbol(),OP_BUY,Lot,Ask,3,sl,0);
                   if(!res)
                      Print("Error in OrderSend. Error code=",GetLastError());
               
@@ -273,12 +273,12 @@ void OnTick()
                   if(sl<slMin)
                    sl=slMin;
                 
-                tp=Bid-TakeProfit*point;
+               // tp=Bid-TakeProfit*point;
                 bool res;
                 res=OrderSend(Symbol(),OP_SELL,Lot,Bid,3,sl,0);
                 if(!res)
                   Print("Error in OrderSend. Error code=",GetLastError());
-                res=OrderSend(Symbol(),OP_SELL,Lot,Bid,3,sl,tp);
+                res=OrderSend(Symbol(),OP_SELL,Lot,Bid,3,sl,0);
                 if(!res)
                  Print("Error in OrderSend. Error code=",GetLastError());
               }
